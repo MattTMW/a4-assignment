@@ -7,10 +7,11 @@ from Profile import Profile, DsuFileError
 
 
 class DirectMessage:
-    def __init__(self):
-        self.recipient = None
-        self.message = None
-        self.timestamp = None
+    def __init__(self, sender, recipient, message, timestamp):
+        self.sender = sender
+        self.recipient = recipient
+        self.message = message
+        self.timestamp = timestamp
 
 
 class DirectMessenger:
@@ -96,19 +97,25 @@ class DirectMessenger:
         except Exception as e:
             print(e)
 
-    def retrieve_messages(self, message_type):
+    def retrieve_messages(self, message_type) -> list:
         try:
             new_message = ds_protocol.retrieve_new_message(self.token, message_type)
             server_response = self.send_to_server(new_message)
-            list_responses = list(server_response.items())
 
-            if server_response['response']['type'] != 'ok':
-                print("Error in retrieving", message_type, "messages.")
-            else:
-                return list_responses
+            messages = []
+            for msg in server_response['response']['messages']:
+                recipient = msg.get('recipient', '')
+                sender = msg.get('from', '')
+                message = msg.get('message', '')
+                timestamp = msg.get('timestamp', '')
+                direct_message = DirectMessage(sender, recipient, message, timestamp)
+                messages.append(direct_message)
+
+            return messages
+
         except Exception as e:
-            print(e)
-
+            print("Error retrieving messages:", e)
+            return []
     def retrieve_new(self) -> list:
         return self.retrieve_messages('new')
 

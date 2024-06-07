@@ -1,6 +1,11 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, simpledialog
 from typing import Text
+import ds_messenger
+from ds_messenger import DirectMessenger, DirectMessage
+import ds_protocol
+import Profile
+
 
 class Body(tk.Frame):
     def __init__(self, root, recipient_selected_callback=None):
@@ -29,16 +34,16 @@ class Body(tk.Frame):
             entry = contact[:24] + "..."
         id = self.posts_tree.insert('', id, id, text=contact)
 
-    def insert_user_message(self, message:str):
+    def insert_user_message(self, message: str):
         self.entry_editor.insert(1.0, message + '\n', 'entry-right')
 
-    def insert_contact_message(self, message:str):
+    def insert_contact_message(self, message: str):
         self.entry_editor.insert(1.0, message + '\n', 'entry-left')
 
     def get_text_entry(self) -> str:
         return self.message_editor.get('1.0', 'end').rstrip()
 
-    def set_text_entry(self, text:str):
+    def set_text_entry(self, text: str):
         self.message_editor.delete(1.0, tk.END)
         self.message_editor.insert(1.0, text)
 
@@ -96,6 +101,7 @@ class Footer(tk.Frame):
         # You must implement this.
         # Here you must configure the button to bind its click to
         # the send_click() function.
+        save_button.config(command=self.send_click)
         save_button.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
         self.footer_label = tk.Label(master=self, text="Ready.")
@@ -128,7 +134,12 @@ class NewContactDialog(tk.simpledialog.Dialog):
         # but you will want to add self.password_entry['show'] = '*'
         # such that when the user types, the only thing that appears are
         # * symbols.
-        #self.password...
+        # self.password...
+        self.password_label = tk.Label(frame, width=30, text="Password")
+        self.password_label.pack()
+        self.password_entry = tk.Entry(frame, width=30, show='*')
+        self.password_entry.insert(tk.END, self.pwd)
+        self.password_entry.pack()
 
 
     def apply(self):
@@ -148,23 +159,30 @@ class MainApp(tk.Frame):
         # You must implement this! You must configure and
         # instantiate your DirectMessenger instance after this line.
         #self.direct_messenger = ... continue!
+        self.direct_messenger = ds_messenger.DirectMessenger()
 
         # After all initialization is complete,
         # call the _draw method to pack the widgets
         # into the root frame
         self._draw()
-        self.body.insert_contact("studentexw23") # adding one example student.
+        self.body.insert_contact("studentexw23")  # adding one example student.
 
     def send_message(self):
-        # You must implement this!
-        pass
+        message = self.body.get_text_entry()
+        self.direct_messenger.send_message(message, self.recipient)
+        self.body.insert_user_message(message)
+        self.body.set_text_entry('')
+
 
     def add_contact(self):
         # You must implement this!
         # Hint: check how to use tk.simpledialog.askstring to retrieve
         # the name of the new contact, and then use one of the body
         # methods to add the contact to your contact list
-        pass
+        contact_name = simpledialog.askstring("Add Contact", "Enter the name of the new contact:")
+        if contact_name:
+            self.body.insert_contact(contact_name)
+
 
     def recipient_selected(self, recipient):
         self.recipient = recipient
@@ -178,10 +196,8 @@ class MainApp(tk.Frame):
         # You must implement this!
         # You must configure and instantiate your
         # DirectMessenger instance after this line.
+        self.direct_messenger = DirectMessenger(dsuserver=self.server, username=self.username, password=self.password)
 
-    def publish(self, message:str):
-        # You must implement this!
-        pass
 
     def check_new(self):
         # You must implement this!
