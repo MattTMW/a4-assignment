@@ -152,18 +152,12 @@ class Profile:
 
     """
 
-    def save_profile(self, path: str) -> None:
-        p = Path(path)
-
-        if p.exists() and p.suffix == '.dsu':
-            try:
-                f = open(p, 'w')
-                json.dump(self.__dict__, f)
-                f.close()
-            except Exception as ex:
-                raise DsuFileError("Error while attempting to process the DSU file.", ex)
-        else:
-            raise DsuFileError("Invalid DSU file path or type")
+    def save_profile(self, file_path) -> None:
+        try:
+            with open(file_path, 'w') as file:
+                json.dump(self.__dict__, file)
+        except Exception as e:
+            raise DsuFileError(e)
 
     """
 
@@ -179,11 +173,12 @@ class Profile:
 
     """
 
-    def load_profile(self, file_path: str):
+    def load_profile(self, file_path):
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
                 self.__dict__.update(data)
         except Exception as e:
             raise DsuFileError(f"Error loading profile from {file_path}: {e}")
+
 

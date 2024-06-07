@@ -2,6 +2,7 @@ import json
 import socket
 import ds_protocol
 import time
+from pathlib import Path
 from Profile import Profile, DsuFileError
 
 
@@ -13,20 +14,20 @@ class DirectMessage:
 
 
 class DirectMessenger:
-    def __init__(self, dsuserver=None, username=None, password=None):
+    def __init__(self, dsuserver=None, username=None, password=None, profile_directory = "C:/Users/User/PycharmProjects/a4-assignment/profiles"):
         self.token = ''
         self.dsuserver = dsuserver
         self.username = username
         self.password = password
+        self.profile_directory = profile_directory
+        self.profile_path = Path(profile_directory) / f"{username}.dsu"
         self.profile = Profile(dsuserver, username, password)
-        self.profile_path = 'test1.dsu'
 
-        # Load existing profile data if available
         try:
             self.profile.load_profile(self.profile_path)
             print("Profile loaded successfully.")
         except DsuFileError:
-            print("No existing profile found, starting fresh.")
+            print("No profile found.")
 
     def join_server(self):
         try:
