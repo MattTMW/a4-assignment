@@ -13,9 +13,13 @@ class DirectMessage:
         self.message = message
         self.timestamp = timestamp
 
+    def __repr__(self):
+        return f"<MESSAGE FROM {self.sender} TO {self.recipient}>"
+
 
 class DirectMessenger:
-    def __init__(self, dsuserver=None, username=None, password=None, profile_directory = "C:/Users/User/PycharmProjects/a4-assignment/profiles"):
+    def __init__(self, dsuserver=None, username=None, password= None,
+                 profile_directory="C:/Users/User/PycharmProjects/a4-assignment/profiles"):
         self.token = ''
         self.dsuserver = dsuserver
         self.username = username
@@ -23,9 +27,11 @@ class DirectMessenger:
         self.profile_directory = profile_directory
         self.profile_path = Path(profile_directory) / f"{username}.dsu"
         self.profile = Profile(dsuserver, username, password)
+        self.messages = []
 
         try:
             self.profile.load_profile(self.profile_path)
+            self.join_server()
             print("Profile loaded successfully.")
         except DsuFileError:
             print("No profile found.")
@@ -72,7 +78,7 @@ class DirectMessenger:
             if response['response']['type'] != 'ok':
                 return False
 
-            # Append the message and recipient to the profile
+            #appends message to user profile
             self.profile.add_message(message)
             self.profile.add_recipient(recipient)
             self.profile.save_profile(self.profile_path)
@@ -110,14 +116,25 @@ class DirectMessenger:
                 timestamp = msg.get('timestamp', '')
                 direct_message = DirectMessage(sender, recipient, message, timestamp)
                 messages.append(direct_message)
+                # Add the message to the recipient's profile
+                self.profile.add_from(sender, message, timestamp)
+                self.profile.save_profile(self.profile_path)
 
+            # Sort messages by timestamp
+            messages.sort(key=lambda x: x.timestamp)
+
+            print(messages)
             return messages
 
         except Exception as e:
             print("Error retrieving messages:", e)
             return []
+
     def retrieve_new(self) -> list:
         return self.retrieve_messages('new')
 
     def retrieve_all(self) -> list:
         return self.retrieve_messages('all')
+
+    def retrieve_contacts(self) -> list:
+        return self.profile.recipients

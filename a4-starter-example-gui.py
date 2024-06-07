@@ -1,10 +1,12 @@
 import tkinter as tk
+import time
+import json
 from tkinter import ttk, filedialog, simpledialog
 from typing import Text
 import ds_messenger
 from ds_messenger import DirectMessenger, DirectMessage
 import ds_protocol
-import Profile
+from Profile import Profile
 
 
 class Body(tk.Frame):
@@ -17,6 +19,12 @@ class Body(tk.Frame):
         # call the _draw method to pack the widgets
         # into the Body instance
         self._draw()
+
+    def clear(self):
+        self.entry_editor.config(state=tk.NORMAL)
+        self.entry_editor.delete('1.0', tk.END)
+        self.entry_editor.config(state=tk.DISABLED)
+        self.message_editor.delete('1.0', tk.END)
 
     def node_select(self, event):
         index = int(self.posts_tree.selection()[0])
@@ -35,10 +43,14 @@ class Body(tk.Frame):
         id = self.posts_tree.insert('', id, id, text=contact)
 
     def insert_user_message(self, message: str):
-        self.entry_editor.insert(1.0, message + '\n', 'entry-right')
+        self.entry_editor.config(state=tk.NORMAL)
+        self.entry_editor.insert(tk.END, message + '\n', 'entry-right')
+        self.entry_editor.config(state=tk.DISABLED)
 
     def insert_contact_message(self, message: str):
+        self.entry_editor.config(state=tk.NORMAL)
         self.entry_editor.insert(1.0, message + '\n', 'entry-left')
+        self.entry_editor.config(state=tk.DISABLED)
 
     def get_text_entry(self) -> str:
         return self.message_editor.get('1.0', 'end').rstrip()
@@ -141,7 +153,6 @@ class NewContactDialog(tk.simpledialog.Dialog):
         self.password_entry.insert(tk.END, self.pwd)
         self.password_entry.pack()
 
-
     def apply(self):
         self.user = self.username_entry.get()
         self.pwd = self.password_entry.get()
@@ -155,37 +166,57 @@ class MainApp(tk.Frame):
         self.username = ''
         self.password = ''
         self.server = ''
+        self.current_recipient = ''
+        self.configure_server()
         self.recipient = ''
         # You must implement this! You must configure and
         # instantiate your DirectMessenger instance after this line.
         #self.direct_messenger = ... continue!
-        self.direct_messenger = ds_messenger.DirectMessenger()
+        self.direct_messenger = ds_messenger.DirectMessenger(self.server, self.username, self.password)
 
         # After all initialization is complete,
         # call the _draw method to pack the widgets
         # into the root frame
         self._draw()
-        self.body.insert_contact("studentexw23")  # adding one example student.
+        for contact_name in set(self.direct_messenger.retrieve_contacts()):
+            self.body.insert_contact(contact_name)
+        print(self.direct_messenger.retrieve_contacts())
 
     def send_message(self):
         message = self.body.get_text_entry()
         self.direct_messenger.send_message(message, self.recipient)
         self.body.insert_user_message(message)
         self.body.set_text_entry('')
-
+        self.direct_messenger.send_message(message, self.recipient)
 
     def add_contact(self):
         # You must implement this!
         # Hint: check how to use tk.simpledialog.askstring to retrieve
         # the name of the new contact, and then use one of the body
         # methods to add the contact to your contact list
-        contact_name = simpledialog.askstring("Add Contact", "Enter the name of the new contact:")
+        contact_name = simpledialog.askstring("Add Contact", "Enter username of new contact:")
         if contact_name:
             self.body.insert_contact(contact_name)
 
-
+    def load_existing_messages(self):
+        if self.direct_messenger:
+            messages = self.direct_messenger.retrieve_all()
+            if messages:
+                for msg in messages:
+                    if msg.sender == self.username:
+                        self.body.insert_user_message(msg.message)
+                    elif msg.sender == self.recipient:
+                        self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
+            else:
+                print("No messages to load.")
+        else:
+            print("DirectMessenger not initialized.")
     def recipient_selected(self, recipient):
-        self.recipient = recipient
+        if self.current_recipient != recipient:
+            self.current_recipient = recipient
+            self.body.clear()
+            self.recipient = recipient
+            self.load_existing_messages()  #loads messages for the selected recipient
 
     def configure_server(self):
         ud = NewContactDialog(self.root, "Configure Account",
@@ -198,10 +229,12 @@ class MainApp(tk.Frame):
         # DirectMessenger instance after this line.
         self.direct_messenger = DirectMessenger(dsuserver=self.server, username=self.username, password=self.password)
 
-
     def check_new(self):
-        # You must implement this!
-        pass
+        if self.direct_messenger:
+            new_messages = self.direct_messenger.retrieve_new()
+            for msg in new_messages:
+                self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
+        self.root.after(2000, self.check_new)
 
     def _draw(self):
         # Build a menu and add it to the root frame.

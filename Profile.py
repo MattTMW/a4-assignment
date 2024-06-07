@@ -91,6 +91,7 @@ class Profile:
         self._posts = []  # OPTIONAL
         self.messages = []
         self.recipients = []
+        self.message_from = []
 
     """
 
@@ -110,6 +111,14 @@ class Profile:
 
     def add_post(self, post: Post) -> None:
         self._posts.append(post)
+
+    def add_from(self, sender, message, timestamp):
+        # Add the message, sender, and timestamp to the profile
+        self.message_from.append({'from': sender, 'message': message, 'timestamp': timestamp})
+        if sender not in self.recipients:
+            self.add_recipient(sender)
+
+
 
     """
 
@@ -180,5 +189,7 @@ class Profile:
                 self.__dict__.update(data)
         except Exception as e:
             raise DsuFileError(f"Error loading profile from {file_path}: {e}")
+
+
 
 
