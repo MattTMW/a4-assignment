@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from typing import Text
 
-#168.235.86.101
 class Body(tk.Frame):
     def __init__(self, root, recipient_selected_callback=None):
         tk.Frame.__init__(self, root)
