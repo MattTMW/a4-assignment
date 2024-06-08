@@ -49,7 +49,7 @@ class Body(tk.Frame):
 
     def insert_contact_message(self, message: str):
         self.entry_editor.config(state=tk.NORMAL)
-        self.entry_editor.insert(1.0, message + '\n', 'entry-left')
+        self.entry_editor.insert(tk.END, message + '\n', 'entry-left')
         self.entry_editor.config(state=tk.DISABLED)
 
     def get_text_entry(self) -> str:
@@ -187,7 +187,6 @@ class MainApp(tk.Frame):
         self.direct_messenger.send_message(message, self.recipient)
         self.body.insert_user_message(message)
         self.body.set_text_entry('')
-        self.direct_messenger.send_message(message, self.recipient)
 
     def add_contact(self):
         # You must implement this!
@@ -232,8 +231,9 @@ class MainApp(tk.Frame):
     def check_new(self):
         if self.direct_messenger:
             new_messages = self.direct_messenger.retrieve_new()
-            for msg in new_messages:
-                self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
+            if new_messages:  # Check if new_messages is not None
+                for msg in new_messages:
+                    self.body.insert_contact_message(f"{msg.sender}: {msg.message}")
         self.root.after(2000, self.check_new)
 
     def _draw(self):

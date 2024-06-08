@@ -6,6 +6,7 @@ import json
 from collections import namedtuple
 
 DataTuple = namedtuple('DataTuple', ['type', 'message', 'recipient', 'token', 'timestamp'])
+MessageTuple = namedtuple('MessageTuple', ['message', 'sender', 'timestamp'])
 
 
 def extract_json(json_msg):
@@ -39,6 +40,16 @@ def send_direct_message(token: str, message: str, recipient: str, timestamp: str
 
 def retrieve_new_message(token: str, message_type: str) -> dict:
     return {"token": token, "directmessage": message_type}
+
+
+def retrieve_offline_message(message: dict):
+    try:
+        user_message = message['message']
+        sender = message['from']
+        time = message['timestamp']
+        return MessageTuple(user_message, sender, time)
+    except Exception as e:
+        print("Error!", e)
 
 
 def retrieve_all_message(token: str, message_type: str) -> dict:
