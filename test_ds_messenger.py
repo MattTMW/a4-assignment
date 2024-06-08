@@ -1,85 +1,35 @@
 import unittest
-from unittest.mock import MagicMock
-from ds_messenger import DirectMessenger, DirectMessage
-
-
-# Mock Profile class to avoid file I/O and actual server connections
-class MockProfile:
-    def __init__(self, dsuserver, username, password):
-        self.dsuserver =
-        self.username = username
-        self.password = password
-        self.token = ''
-        self.messages = []
-        self.recipients = []
-
-    def load_profile(self, path):
-        pass
-
-    def save_profile(self, path):
-        pass
-
-    def add_message(self, message):
-        self.messages.append(message)
-
-    def add_recipient(self, recipient):
-        self.recipients.append(recipient)
-
-    def add_from(self, sender, message, timestamp):
-        self.messages.append({"from": sender, "message": message, "timestamp": timestamp})
+import ds_messenger
 
 
 class TestDirectMessenger(unittest.TestCase):
-    def setUp(self):
-        self.dsuserver = 'testserver.com'
-        self.username = 'testuser'
-        self.password = 'testpass'
 
-        # Replace the profile with a mock profile
-        DirectMessenger.profile = MockProfile(self.dsuserver, self.username, self.password)
-        self.messenger = DirectMessenger(self.dsuserver, self.username, self.password)
+    def information(self):
+        self.dsuserver = '168.235.86.101'
+        self.username = 'chairbro'
+        self.password = 'bro'
+        self.messenger = ds_messenger.DirectMessenger(self.dsuserver, self.username, self.password)
 
-    def test_join_server_success(self):
-        # Simulate a successful server join
-        self.messenger.profile.token = '12345'
-        self.assertTrue(self.messenger.join_server())
-        self.assertEqual(self.messenger.token, '12345')
+    def test_join_server(self):
+        result = self.messenger.join_server()
+        self.assertTrue(result, "Failed to join server")  #server should fail
 
-    def test_send_message_success(self):
-        # Simulate a successful message send
-        self.messenger.token = '12345'
-        self.messenger.send_to_server = MagicMock(return_value={"response": {"type": "ok"}})
+    def test_send_message_valid(self):
+        self.messenger.join_server()  #join server
+        result = self.messenger.send_message("Hello, world!", "ethanboy")  # valid message
+        self.assertTrue(result, "Failed to send valid message")
 
-        result = self.messenger.send_message('Hello', 'recipient_user')
-        self.assertTrue(result)
+    def test_retrieve_all_messages(self):
+        self.messenger.join_server()  #join server
+        self.messenger.send_message("will it work?", "ethanboy")  #sends message
+        all_messages = self.messenger.retrieve_all()
+        self.assertIsInstance(all_messages, list, "Failed to retrieve all messages")
+        self.assertGreater(len(all_messages), 0, "No messages retrieved")
 
-    def test_send_message_failure(self):
-        # Simulate a failed message send
-        self.messenger.token = '12345'
-        self.messenger.send_to_server = MagicMock(return_value={"response": {"type": "error"}})
-
-        result = self.messenger.send_message('Hello', 'recipient_user')
-        self.assertFalse(result)
-
-    def test_retrieve_messages(self):
-        # Simulate retrieving messages
-        self.messenger.token = '12345'
-        self.messenger.send_to_server = MagicMock(return_value={
-            "response": {
-                "messages": [
-                    {"recipient": "testuser", "from": "sender1", "message": "Hello", "timestamp": "1622505600"},
-                    {"recipient": "testuser", "from": "sender2", "message": "Hi", "timestamp": "1622505700"}
-                ]
-            }
-        })
-
-        messages = self.messenger.retrieve_messages('new')
-        self.assertEqual(len(messages), 2)
-        self.assertEqual(messages[0].sender, 'sender1')
-        self.assertEqual(messages[0].message, 'Hello')
-        self.assertEqual(messages[1].sender, 'sender2')
-        self.assertEqual(messages[1].message, 'Hi')
-
+    def test_invalid_server(self):
+        self.messenger.dsuserver = 'invalid.server.address'  #string for server
+        result = self.messenger.join_server()
+        self.assertFalse(result, "Should not be able to join invalid server")
 
 if __name__ == '__main__':
     unittest.main()

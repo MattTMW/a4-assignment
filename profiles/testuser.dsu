@@ -1,1 +1,0 @@
-{"dsuserver": "testserver.com", "username": "testuser", "password": "testpass", "bio": "", "_posts": [], "messages": [], "recipients": ["sender1", "sender2"], "message_from": [{"from": "sender1", "message": "Hello", "timestamp": "1622505600"}, {"from": "sender2", "message": "Hi", "timestamp": "1622505700"}]}

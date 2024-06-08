@@ -35,7 +35,6 @@ class DirectMessenger:
         except DsuFileError:
             print("No profile found.")
 
-
     def join_server(self):
         self.profile.load_profile(self.profile_path)
         try:
@@ -71,6 +70,9 @@ class DirectMessenger:
             return False
 
     def send_message(self, message: str, recipient: str) -> bool:
+        if not self.join_server():
+            return False
+
         try:
             timestamp = str(time.time())
             directmessage = ds_protocol.send_direct_message(self.token, message, recipient, timestamp)
@@ -132,13 +134,14 @@ class DirectMessenger:
                 more_messages = self.profile.message_from
                 for message in more_messages:
                     user_message = ds_protocol.retrieve_offline_message(message)
-                    message_lst.append(DirectMessage(sender = '', recipient=user_message.sender, message=user_message.message, timestamp=user_message.timestamp))
+                    message_lst.append(
+                        DirectMessage(sender='', recipient=user_message.sender, message=user_message.message,
+                                      timestamp=user_message.timestamp))
                 return message_lst
         except OSError:
             print("ERROR connect to internet!")
         except Exception as e:
             print("Error retrieving messages:", e)
-
 
     def retrieve_new(self) -> list:
         return self.retrieve_messages('new')
@@ -148,3 +151,6 @@ class DirectMessenger:
 
     def retrieve_contacts(self) -> list:
         return self.profile.recipients
+
+    def retrieve_user_messages(self) -> list:
+        return self.profile.messages
